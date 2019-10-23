@@ -13,11 +13,58 @@ const PORT = process.env.PORT || 3003;
 
 app.get('/location', handleLocation);
 app.get('/weather', handleWeather);
+app.get('/trails', handleTrail);
 app.get('*', handleError);
 
 
 //cached data:
 let storedUrls = {};
+
+function handleTrail(request, response) {
+  const trail = request.query.data;
+  console.log(`trail: ${trail}`);
+  const url = `https://www.hikingproject.com/data/get-trails?lat=40.0274&lon=-105.2519&maxDistance=10&key=${process.env.TRAILS_API_KEY}`;
+
+
+  if (storedUrls[url]) {
+    console.log('using cached url');
+    response.send(storedUrls[url]);
+  } else {
+    console.log('making the api call to get weather info');
+    superagent.get(url)
+      .then(resultsFromSuperagent => {
+        let routeOfTrails = resultsFromSuperagent.body.daily.data;
+        console.log(routeOfTrails);
+        let routeArray = routeOfTrails.map(route => {
+          console.log('array of route', routeArray);
+          response.status(200).send(weatherArray);
+
+          return new Trail(route);
+        })
+      })
+      .catch(error => {
+        console.error('Error getting location info.');
+      })
+
+  }
+}
+
+
+// function Location(location, geoData) {
+//   this.search_query = location;
+//   this.formatted_query = geoData.formatted_address;
+//   this.latitude = geoData.geometry.location.lat;
+//   this.longitude = geoData.geometry.location.lng;
+// }
+
+// function handleWeather(request, response) {
+//   console.log('weather info:');
+//   const locationObj = request.query.data;
+//   console.log(locationObj);
+//   const latitude = locationObj.latitude;
+//   console.log('latitude:', latitude);
+//   const longitude = locationObj.longitude;
+
 
 
 

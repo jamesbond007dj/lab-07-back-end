@@ -91,10 +91,6 @@ function handleWeather(request, response) {
 
         console.log('array of weather', weatherArray);
         response.status(200).send(weatherArray);
-
-        // const locationObject = new Location(location, resultsFromSuperagent.body);
-        // storedUrls[url] = locationObject;
-        // response.status(200).send(locationObject);
       })
       .catch(error => {
         console.error('Error');

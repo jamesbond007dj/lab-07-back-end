@@ -14,9 +14,9 @@ const PORT = process.env.PORT || 3003
 app.get('/location', (request, response) => {
   try {
     const city = request.query.data;
-    const locations = locationData(city);
-    console.log(locationData);
-    response.send(locationData);
+    const location = locationData(city);
+    console.log(location);
+    response.send(location);
   }
   catch (error) {
     Error(error, response);
@@ -24,10 +24,11 @@ app.get('/location', (request, response) => {
 });
 
 
-function locationData(location) {
+
+function locationData(city) {
   const geoData = require('./data/geo.json');
   console.log(geoData);
-  const locationObject = new Location(location, geoData);
+  const locationObject = new Location(city, geoData);
   return locationObject;
 }
 

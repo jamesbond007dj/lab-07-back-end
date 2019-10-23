@@ -22,7 +22,6 @@ let storedUrls = {};
 
 
 function handleLocation(request, response) {
-  console.log(`this is line 25`, request.query.data);
   const location = request.query.data;
   console.log(`location: ${location}`);
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${location}&key=${process.env.GEOCODE_API_KEY}`;
@@ -31,26 +30,21 @@ function handleLocation(request, response) {
     console.log('using cached url');
     response.send(storedUrls[url]);
   } else {
-    console.log('making the api call to get the data');
+    console.log('making the api call to get location info');
     superagent.get(url)
       .then(resultsFromSuperagent => {
-        console.log(resultsFromSuperagent.body);
-        const locationObject = new Location(location, resultsFromSuperagent.body);
+        console.log(resultsFromSuperagent.body.results[0]);
+        const locationObject = new Location(location, resultsFromSuperagent.body.results[0]);
         storedUrls[url] = locationObject;
         response.status(200).send(locationObject);
+        console.log('done using superagent for location info');
       })
       .catch(error => {
-        console.error('Error');
-      });
-  };
+        console.error('Error getting location info.');
+      })
+  }
 }
 
-// function locationData(city) {
-//   // const geoData = require('./data/geo.json');
-//   // console.log(geoData);
-//   const locationObject = new Location(city, geoData);
-//   return locationObject;
-// }
 
 function Location(location, geoData) {
   this.search_query = location;
@@ -60,25 +54,59 @@ function Location(location, geoData) {
 }
 
 function handleWeather(request, response) {
-  const darkskyData = require('./data/darksky.json')
-  const tempArray = [];
+  console.log('weather info:');
+  const locationObj = request.query.data;
+  console.log(locationObj);
+  const latitude = locationObj.latitude;
+  console.log('latitude:', latitude);
+  const longitude = locationObj.longitude;
 
-  darkskyData.daily.data.forEach(object => {
-    let tempValue = new Weather(object);
-    tempArray.push(tempValue);
-  })
-  try {
-    response.status(200).send(tempArray);
-  }
-  catch (error) {
-    Error(error, response)
-  }
+  // const tempArray = [];
+
+  // darkskyData.daily.data.forEach(object => {
+  //   let tempValue = new Weather(object);
+  //   tempArray.push(tempValue);
+  // })
+  // try {
+  //   response.status(200).send(tempArray);
+  // }
+  // catch (error) {
+  //   Error(error, response)
+  // }
+  console.log(latitude, longitude);
+  const url = `https://api.darksky.net/forecast/${process.env.DARKSKY_API_KEY}/${latitude},${longitude}`;
+
+  if (storedUrls[url]) {
+    console.log('using cached url');
+    response.send(storedUrls[url]);
+  } else {
+    console.log('making the api call to get weather info');
+    superagent.get(url)
+      .then(resultsFromSuperagent => {
+        let daysOfWeather = resultsFromSuperagent.body.daily.data;
+        console.log(daysOfWeather);
+        let weatherArray = daysOfWeather.map(day => {
+          return new Weather(day);
+        });
+
+        console.log('array of weather', weatherArray);
+        response.status(200).send(weatherArray);
+
+        // const locationObject = new Location(location, resultsFromSuperagent.body);
+        // storedUrls[url] = locationObject;
+        // response.status(200).send(locationObject);
+      })
+      .catch(error => {
+        console.error('Error');
+      });
+  };
 };
 
 
-function Weather(object) {
-  this.forecast = object.summary
-  this.time = this.revisedDate(object.time);
+
+function Weather(day) {
+  this.forecast = day.summary;
+  this.time = new Date(day.time).toDateString();
 }
 
 Weather.prototype.revisedDate = function (time) {

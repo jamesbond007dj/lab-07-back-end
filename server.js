@@ -6,12 +6,18 @@ require('dotenv').config();
 const app = express();
 const superagent = require('superagent')
 
-
 app.use(cors());
 
 const PORT = process.env.PORT || 3003
 
-app.get('/location', (request, response) => {
+
+app.get('/location', handleLocation);
+app.get('/weather', handleWeather);
+app.get('*', handleError);
+
+
+
+function handleLocation(request, response) {
   try {
     const city = request.query.data;
     const location = locationData(city);
@@ -21,9 +27,7 @@ app.get('/location', (request, response) => {
   catch (error) {
     Error(error, response);
   }
-});
-
-
+};
 
 function locationData(city) {
   const geoData = require('./data/geo.json');
@@ -39,8 +43,7 @@ function Location(city, geoData) {
   this.longitude = geoData.results[0].geometry.location.lng;
 }
 
-
-app.get('/weather', (request, response) => {
+function handleWeather(request, response) {
   const darkskyData = require('./data/darksky.json')
   const tempArray = [];
 
@@ -54,7 +57,8 @@ app.get('/weather', (request, response) => {
   catch (error) {
     Error(error, response)
   }
-});
+};
+
 
 function Weather(object) {
   this.forecast = object.summary
@@ -71,10 +75,10 @@ function Error(error, response) {
   return response.status(500).send('Sorry, there is a temporary problem.Please try it later.');
 }
 
-app.get('*', (request, response) => {
+function handleError(request, response) {
   response.status(404);
   response.send('Server connection problem');
-});
+};
 
 app.listen(PORT, () => console.log(`app is listening on ${PORT}`));
 
